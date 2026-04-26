@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 
 <meta charset="UTF-8">
-<title>Employee Job Scheduler</title>
+<title>Employee Scheduler</title>
 
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.10/index.global.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.10/index.global.min.js"></script>
@@ -16,82 +16,23 @@ font-family:Arial, Helvetica, sans-serif;
 background:#f4f6f9;
 }
 
-.container{
-display:flex;
-height:100vh;
-}
-
-.sidebar{
-width:260px;
-background:white;
-border-right:1px solid #ddd;
-padding:20px;
-overflow-y:auto;
-}
-
-.sidebar h2{
-margin-top:0;
-}
-
-.job{
-background:#3498db;
+header{
+background:#2c3e50;
 color:white;
-padding:10px;
-border-radius:6px;
-margin-bottom:10px;
-cursor:grab;
-font-size:14px;
-}
-
-.job:hover{
-background:#2980b9;
-}
-
-button{
-width:100%;
-padding:10px;
-margin-top:15px;
-border:none;
-background:#2ecc71;
-color:white;
-font-weight:bold;
-border-radius:5px;
-cursor:pointer;
-}
-
-button:hover{
-background:#27ae60;
+padding:15px 25px;
+font-size:20px;
 }
 
 #calendar{
-flex:1;
 padding:20px;
-background:white;
 }
 
-.modal{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.4);
-align-items:center;
-justify-content:center;
+.fc-resource{
+font-weight:bold;
 }
 
-.modal-content{
-background:white;
-padding:20px;
-border-radius:8px;
-width:300px;
-}
-
-.modal input{
-width:100%;
-padding:8px;
-margin-bottom:10px;
+.fc-timeline-slot{
+text-align:center;
 }
 
 </style>
@@ -100,166 +41,74 @@ margin-bottom:10px;
 
 <body>
 
-<div class="container">
-
-<div class="sidebar">
-
-<h2>Jobs</h2>
-
-<div id="jobs"></div>
-
-<button onclick="openModal()">+ New Job</button>
-
-</div>
+<header>
+Employee Scheduling Dashboard
+</header>
 
 <div id="calendar"></div>
 
-</div>
-
-
-<!-- JOB CREATION MODAL -->
-
-<div class="modal" id="jobModal">
-
-<div class="modal-content">
-
-<h3>Create Job</h3>
-
-<input id="jobTitle" placeholder="Job Title">
-<input id="clientName" placeholder="Client Name">
-
-<button onclick="createJob()">Create Job</button>
-
-</div>
-
-</div>
-
-
 <script>
 
-const jobs = [
-{id:1,title:"AC Installation"},
-{id:2,title:"Plumbing Repair"},
-{id:3,title:"Electrical Inspection"},
-{id:4,title:"HVAC Service"}
-]
+async function loadEmployees(){
 
-const employees = [
-{id:"1",title:"John"},
-{id:"2",title:"Sarah"},
-{id:"3",title:"Mike"},
-{id:"4",title:"Emma"}
-]
+const response = await fetch("employees.json")
 
-function renderJobs(){
+const employees = await response.json()
 
-const container = document.getElementById("jobs")
-
-container.innerHTML=""
-
-jobs.forEach(job=>{
-
-const el = document.createElement("div")
-
-el.className="job"
-el.innerText=job.title
-el.dataset.id=job.id
-el.dataset.title=job.title
-
-el.draggable=true
-
-el.addEventListener("dragstart",(e)=>{
-
-e.dataTransfer.setData("title",job.title)
-e.dataTransfer.setData("id",job.id)
-
-})
-
-container.appendChild(el)
-
-})
+return employees.map(emp => ({
+id: emp.id,
+title: emp.name
+}))
 
 }
 
+async function initCalendar(){
 
-function openModal(){
+const employees = await loadEmployees()
 
-document.getElementById("jobModal").style.display="flex"
+const calendarEl = document.getElementById("calendar")
 
-}
+const calendar = new FullCalendar.Calendar(calendarEl, {
 
-function createJob(){
+schedulerLicenseKey: "CC-Attribution-NonCommercial-NoDerivatives",
 
-const title=document.getElementById("jobTitle").value
+initialView: "resourceTimelineWeek",
 
-if(!title)return
+height: "auto",
 
-jobs.push({
-id:Date.now(),
-title:title
-})
+resources: employees,
 
-document.getElementById("jobTitle").value=""
-
-document.getElementById("jobModal").style.display="none"
-
-renderJobs()
-
-}
-
-
-document.addEventListener("DOMContentLoaded",function(){
-
-renderJobs()
-
-const calendarEl=document.getElementById("calendar")
-
-const calendar=new FullCalendar.Calendar(calendarEl,{
-
-schedulerLicenseKey:"CC-Attribution-NonCommercial-NoDerivatives",
-
-initialView:"resourceTimeGridWeek",
-
-height:"100%",
-
-resources:employees,
-
-editable:true,
-
-droppable:true,
-
-headerToolbar:{
-left:"prev,next today",
-center:"title",
-right:"resourceTimeGridDay,resourceTimeGridWeek"
+headerToolbar: {
+left: "prev,next today",
+center: "title",
+right: "resourceTimelineDay,resourceTimelineWeek"
 },
 
-drop:function(info){
+slotDuration: "24:00:00",
 
-const title=info.draggedEl.dataset.title
-const jobId=info.draggedEl.dataset.id
-const employee=info.resource
+slotLabelFormat: [
+{ weekday: "short" },
+{ day: "numeric" }
+],
 
-const start=info.date
-const end=new Date(start.getTime()+60*60*1000)
+editable: true,
+
+selectable: true,
+
+select: function(info){
+
+const title = prompt("Enter job name")
+
+if(title){
 
 calendar.addEvent({
-
-title:title,
-start:start,
-end:end,
-resourceId:employee.id
-
+title: title,
+start: info.start,
+end: info.end,
+resourceId: info.resource.id
 })
 
-console.log("JOB ASSIGNED")
-
-console.log({
-job_id:jobId,
-employee_id:employee.id,
-start:start,
-end:end
-})
+}
 
 }
 
@@ -267,7 +116,9 @@ end:end
 
 calendar.render()
 
-})
+}
+
+document.addEventListener("DOMContentLoaded", initCalendar)
 
 </script>
 
