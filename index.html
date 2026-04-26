@@ -12,27 +12,51 @@
 
 body{
 margin:0;
-font-family:Arial, Helvetica, sans-serif;
+font-family:Arial;
 background:#f4f6f9;
 }
 
 header{
 background:#2c3e50;
 color:white;
-padding:15px 25px;
+padding:15px;
 font-size:20px;
 }
 
+.container{
+display:flex;
+height:calc(100vh - 60px);
+}
+
+.jobs-panel{
+width:260px;
+background:white;
+border-right:1px solid #ddd;
+padding:15px;
+overflow-y:auto;
+}
+
+.jobs-panel h3{
+margin-top:0;
+}
+
+.job{
+background:#3498db;
+color:white;
+padding:10px;
+border-radius:5px;
+margin-bottom:10px;
+cursor:grab;
+font-size:14px;
+}
+
+.job:hover{
+background:#2980b9;
+}
+
 #calendar{
-padding:20px;
-}
-
-.fc-resource{
-font-weight:bold;
-}
-
-.fc-timeline-slot{
-text-align:center;
+flex:1;
+padding:15px;
 }
 
 </style>
@@ -42,17 +66,31 @@ text-align:center;
 <body>
 
 <header>
-Employee Scheduling Dashboard
+Employee Dispatch Scheduler
 </header>
 
+<div class="container">
+
+<div class="jobs-panel">
+
+<h3>Unscheduled Jobs</h3>
+
+<div class="job" data-title="AC Install">AC Install</div>
+<div class="job" data-title="Plumbing Repair">Plumbing Repair</div>
+<div class="job" data-title="Electrical Check">Electrical Check</div>
+<div class="job" data-title="HVAC Service">HVAC Service</div>
+
+</div>
+
 <div id="calendar"></div>
+
+</div>
 
 <script>
 
 async function loadEmployees(){
 
 const response = await fetch("employees.json")
-
 const employees = await response.json()
 
 return employees.map(emp => ({
@@ -78,37 +116,35 @@ height: "auto",
 
 resources: employees,
 
-headerToolbar: {
-left: "prev,next today",
-center: "title",
-right: "resourceTimelineDay,resourceTimelineWeek"
+headerToolbar:{
+left:"prev,next today",
+center:"title",
+right:"resourceTimelineDay,resourceTimelineWeek"
 },
 
-slotDuration: "24:00:00",
+slotDuration:"24:00:00",
 
-slotLabelFormat: [
-{ weekday: "short" },
-{ day: "numeric" }
+slotLabelFormat:[
+{ weekday:"short"},
+{ day:"numeric"}
 ],
 
-editable: true,
+droppable:true,
 
-selectable: true,
+editable:true,
 
-select: function(info){
+drop:function(info){
 
-const title = prompt("Enter job name")
-
-if(title){
+const title = info.draggedEl.dataset.title
 
 calendar.addEvent({
-title: title,
-start: info.start,
-end: info.end,
-resourceId: info.resource.id
+title:title,
+start:info.date,
+end:new Date(info.date.getTime() + 2*60*60*1000),
+resourceId:info.resource.id
 })
 
-}
+info.draggedEl.remove()
 
 }
 
@@ -118,7 +154,23 @@ calendar.render()
 
 }
 
-document.addEventListener("DOMContentLoaded", initCalendar)
+document.addEventListener("DOMContentLoaded",function(){
+
+document.querySelectorAll(".job").forEach(job => {
+
+job.draggable = true
+
+job.addEventListener("dragstart", function(e){
+
+e.dataTransfer.setData("title", job.dataset.title)
+
+})
+
+})
+
+initCalendar()
+
+})
 
 </script>
 
