@@ -1,1 +1,13 @@
-
+[
+  { "id": "1", "name": "ASHLEY SHIRREFF" },
+  { "id": "2", "name": "CHRIS LEDDIN" },
+  { "id": "3", "name": "SAM CRIMMIN" },
+  { "id": "4", "name": "JAMES MINOGUE" },
+  { "id": "5", "name": "RYAN STINGEL" },
+  { "id": "6", "name": "COREY MURPHY" },
+  { "id": "7", "name": "NICK BASILE" },
+  { "id": "8", "name": "NATHAN MCRAE" },
+  { "id": "9", "name": "JET WESLEY" },
+  { "id": "10", "name": "JEMMA SCOTT" },
+  { "id": "11", "name": "GENIE POPLAWSKI" }
+]
