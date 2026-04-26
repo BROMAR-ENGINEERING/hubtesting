@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>Employee Scheduler</title>
+<title>Ultimate Dispatch Scheduler</title>
 
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.10/index.global.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.10/index.global.min.js"></script>
@@ -20,7 +20,8 @@ header{
 background:#2c3e50;
 color:white;
 padding:15px;
-font-size:20px;
+font-size:18px;
+font-weight:bold;
 }
 
 .container{
@@ -28,8 +29,9 @@ display:flex;
 height:calc(100vh - 60px);
 }
 
+/* LEFT PANEL */
 .jobs-panel{
-width:260px;
+width:280px;
 background:white;
 border-right:1px solid #ddd;
 padding:15px;
@@ -41,22 +43,52 @@ margin-top:0;
 }
 
 .job{
-background:#3498db;
-color:white;
 padding:10px;
-border-radius:5px;
 margin-bottom:10px;
+border-radius:6px;
+color:white;
 cursor:grab;
 font-size:14px;
+font-weight:bold;
 }
 
-.job:hover{
-background:#2980b9;
-}
+/* JOB TYPES */
+.job.install{ background:#27ae60; }
+.job.maintenance{ background:#16a085; }
+.job.testtag{ background:#3498db; }
+.job.rcd{ background:#8e44ad; }
+.job.emergency{ background:#e74c3c; }
 
+/* CALENDAR */
 #calendar{
 flex:1;
-padding:15px;
+padding:10px;
+}
+
+/* FULLCALENDAR COLORS */
+.fc-event.install{
+background:#27ae60 !important;
+border-color:#27ae60 !important;
+}
+
+.fc-event.maintenance{
+background:#16a085 !important;
+border-color:#16a085 !important;
+}
+
+.fc-event.testtag{
+background:#3498db !important;
+border-color:#3498db !important;
+}
+
+.fc-event.rcd{
+background:#8e44ad !important;
+border-color:#8e44ad !important;
+}
+
+.fc-event.emergency{
+background:#e74c3c !important;
+border-color:#e74c3c !important;
 }
 
 </style>
@@ -66,22 +98,24 @@ padding:15px;
 <body>
 
 <header>
-Employee Dispatch Scheduler
+Ultimate Employee Dispatch Scheduler
 </header>
 
 <div class="container">
 
+<!-- JOB QUEUE -->
 <div class="jobs-panel">
-
 <h3>Unscheduled Jobs</h3>
 
-<div class="job" data-title="AC Install">AC Install</div>
-<div class="job" data-title="Plumbing Repair">Plumbing Repair</div>
-<div class="job" data-title="Electrical Check">Electrical Check</div>
-<div class="job" data-title="HVAC Service">HVAC Service</div>
+<div class="job install" data-title="INSTALL" data-type="install">INSTALL</div>
+<div class="job maintenance" data-title="MAINTENANCE" data-type="maintenance">MAINTENANCE</div>
+<div class="job testtag" data-title="TEST & TAG" data-type="testtag">TEST & TAG</div>
+<div class="job rcd" data-title="RCD TESTING" data-type="rcd">RCD TESTING</div>
+<div class="job emergency" data-title="EMERGENCY CALL" data-type="emergency">EMERGENCY CALL</div>
 
 </div>
 
+<!-- CALENDAR -->
 <div id="calendar"></div>
 
 </div>
@@ -90,17 +124,29 @@ Employee Dispatch Scheduler
 
 async function loadEmployees(){
 
-const response = await fetch("employees.json")
-const employees = await response.json()
+const res = await fetch("employees.json")
+const data = await res.json()
 
-return employees.map(emp => ({
+return data.map(emp => ({
 id: emp.id,
 title: emp.name
 }))
 
 }
 
-async function initCalendar(){
+document.addEventListener("DOMContentLoaded", async function(){
+
+// make jobs draggable
+document.querySelectorAll(".job").forEach(job => {
+
+job.draggable = true
+
+job.addEventListener("dragstart", e => {
+e.dataTransfer.setData("title", job.dataset.title)
+e.dataTransfer.setData("type", job.dataset.type)
+})
+
+})
 
 const employees = await loadEmployees()
 
@@ -112,9 +158,12 @@ schedulerLicenseKey: "CC-Attribution-NonCommercial-NoDerivatives",
 
 initialView: "resourceTimelineWeek",
 
-height: "auto",
+height: "100%",
 
 resources: employees,
+
+editable: true,
+droppable: true,
 
 headerToolbar:{
 left:"prev,next today",
@@ -125,50 +174,28 @@ right:"resourceTimelineDay,resourceTimelineWeek"
 slotDuration:"24:00:00",
 
 slotLabelFormat:[
-{ weekday:"short"},
-{ day:"numeric"}
+{ weekday:"short" },
+{ day:"numeric" }
 ],
-
-droppable:true,
-
-editable:true,
 
 drop:function(info){
 
 const title = info.draggedEl.dataset.title
+const type = info.draggedEl.dataset.type
 
 calendar.addEvent({
-title:title,
-start:info.date,
-end:new Date(info.date.getTime() + 2*60*60*1000),
-resourceId:info.resource.id
+title: title,
+start: info.date,
+end: new Date(info.date.getTime() + 2*60*60*1000),
+resourceId: info.resource.id,
+className: type
 })
-
-info.draggedEl.remove()
 
 }
 
 })
 
 calendar.render()
-
-}
-
-document.addEventListener("DOMContentLoaded",function(){
-
-document.querySelectorAll(".job").forEach(job => {
-
-job.draggable = true
-
-job.addEventListener("dragstart", function(e){
-
-e.dataTransfer.setData("title", job.dataset.title)
-
-})
-
-})
-
-initCalendar()
 
 })
 
